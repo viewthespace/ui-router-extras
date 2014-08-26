@@ -84,7 +84,7 @@ describe('$transition$', function () {
       var invokeCount = 0;
       $state.go("A.AA.AAA");
       t.promise.then(function() {
-        throw Error("Shouldn't get here.");
+        throw Error("Should have transitioned to B instead.");
       }, function() {
         invokeCount++;
       });
