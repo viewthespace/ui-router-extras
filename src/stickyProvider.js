@@ -301,7 +301,6 @@ function $StickyStateProvider($stateProvider, uirextras_coreProvider) {
             delete inactiveStates[state.self.name];
           }
           state.self.status = 'entered';
-//        if (state.locals == null || state.locals.globals == null) debugger;
           if (state.self.onReactivate)
             $injector.invoke(state.self.onReactivate, state.self, state.locals ? state.locals.globals : {});
         },
