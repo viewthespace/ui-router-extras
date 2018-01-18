@@ -493,8 +493,9 @@ function $StickyStateProvider($stateProvider, uirextras_coreProvider) {
         var toParams = transition.toParams;
         var keep = 0, state = toPath[keep];
 
-        if (transition.options.inherit) {
-          toParams = inheritParams($stateParams, toParams || {}, $state.$current, transition.toState);
+        if (transition.options && transition.options.inherit) {
+          toParams = transition.toParams =
+              inheritParams($stateParams, toParams || {}, $state.$current, transition.toState);
         }
 
         while (state && state === fromPath[keep] && paramsEqualForState(state.ownParams, toParams, transition.fromParams)) {
@@ -566,7 +567,7 @@ function $StickyStateProvider($stateProvider, uirextras_coreProvider) {
           //   enter: full resolve, no special logic
           //   reactivate: use previous locals
           //   reload: like 'enter', except exit the inactive state before entering it.
-          var reloaded = !!transition.options.reload;
+          var reloaded = transition.options && !!transition.options.reload;
           enteringTypes = treeChanges.entering.map(function(state) {
             var type = getEnterTransition(state, transition.toParams, transition.reloadStateTree, reloaded);
             reloaded = reloaded || type === 'reload';
@@ -661,7 +662,6 @@ function $StickyStateProvider($stateProvider, uirextras_coreProvider) {
             delete inactiveStates[state.self.name];
           }
           state.self.status = 'entered';
-//        if (state.locals == null || state.locals.globals == null) debugger;
           if (state.self.onReactivate)
             $injector.invoke(state.self.onReactivate, state.self, state.locals ? state.locals.globals : {});
         },
@@ -1201,14 +1201,16 @@ angular.module("ct.ui.router.extras.sticky").config(
             return state;
           }, function transitionFailed(err) {
             restore();
-            if (DEBUG &&
-              err.message !== "transition prevented" &&
+            if (err.message !== "transition prevented" &&
               err.message !== "transition aborted" &&
               err.message !== "transition superseded") {
-              $log.debug("transition failed", err);
-              $log.debug(err.stack);
+              if (DEBUG) {
+                $log.debug("transition failed", err);
+                $log.debug(err.stack);
+              } else {
+                return $q.reject(err);
+              }
             }
-            return $q.reject(err);
           });
         };
         return $state;
@@ -1615,8 +1617,8 @@ angular.module('ct.ui.router.extras.previous', [ 'ct.ui.router.extras.core', 'ct
         },
         go: function (memoName, options) {
           var to = $previousState.get(memoName);
-          if (memoName && !to) {
-            return $q.reject(new Error('undefined memo'));
+          if (!to) {
+            return $q.reject(new Error('no previous state ' + (memoName ? 'for memo: ' + memoName : '')));
           }
           return $state.go(to.state, to.params, options);
         },
